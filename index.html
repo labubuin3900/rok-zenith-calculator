@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#171b21">
+<title>라오킹 정점 이벤트 계산기</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5f7;color:#171b21;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.app{max-width:760px;margin:auto;padding:18px 14px 45px}
+.card{background:#fff;border:1px solid #dfe4e8;border-radius:20px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,.06);margin-bottom:15px}
+.cover{min-height:650px;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column;overflow:hidden;position:relative}
+.cover h1{font-size:32px;margin:10px 0 5px}
+.cover p{color:#66717c;margin:0 0 25px;line-height:1.6}
+.cover button{width:240px}
+.cover .ground{position:absolute;bottom:-90px;width:460px;height:180px;border-radius:50%;background:#edf1f3}
+.labubu{position:relative;width:230px;height:250px;z-index:1}
+.labubu .ear{position:absolute;top:5px;width:55px;height:105px;border-radius:60% 60% 45% 45%;background:#8a7a6d;transform:rotate(-22deg)}
+.labubu .ear.right{right:15px;transform:rotate(22deg)}
+.labubu .head{position:absolute;left:25px;top:42px;width:180px;height:155px;border-radius:48% 48% 45% 45%;background:#a99482}
+.labubu .hair{position:absolute;left:39px;top:22px;width:150px;height:70px;background:#b7a18e;clip-path:polygon(0 100%,7% 45%,17% 70%,28% 18%,38% 65%,50% 8%,61% 65%,73% 20%,84% 68%,94% 42%,100% 100%);z-index:2}
+.labubu .eye{position:absolute;top:101px;width:20px;height:27px;border-radius:50%;background:#171b21;z-index:3}
+.labubu .eye.left{left:72px}.labubu .eye.right{right:72px}
+.labubu .nose{position:absolute;left:103px;top:123px;width:22px;height:15px;border-radius:50%;background:#3b3030;z-index:3}
+.labubu .mouth{position:absolute;left:82px;top:144px;width:65px;height:28px;border-bottom:5px solid #171b21;border-radius:0 0 50% 50%;z-index:3}
+.labubu .tooth{position:absolute;left:107px;top:153px;width:10px;height:22px;background:#fff;z-index:4}
+.labubu .body{position:absolute;left:69px;top:184px;width:95px;height:55px;border-radius:45px 45px 25px 25px;background:#d8c5b1;z-index:0}
+.steps{display:flex;gap:7px;margin-bottom:15px}
+.steps div{flex:1;text-align:center;padding:9px 4px;border-radius:10px;background:#e9edf0;color:#69737d;font-size:12px;font-weight:800}
+.steps .active{background:#171b21;color:#fff}
+.page{display:none}.page.active{display:block}
+h2{margin:0 0 7px;font-size:22px}
+.desc{margin:0 0 18px;color:#69737d;font-size:14px;line-height:1.5}
+label{display:block;font-size:14px;font-weight:800;margin-bottom:7px}
+input,select{width:100%;border:1px solid #cfd6dc;border-radius:11px;padding:12px 13px;font-size:16px;background:#fff;color:#171b21}
+input:focus,select:focus{outline:2px solid #dfe6eb;border-color:#8a969f}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scorebox,.resultbox{background:#eef2f5;border-radius:15px;padding:20px;text-align:center;margin:17px 0}
+.scorebox small,.resultbox small{color:#68737e}.scorebox strong,.resultbox strong{display:block;font-size:34px;margin-top:4px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+.choice input{display:none}
+.choice label{border:2px solid #d8dfe4;border-radius:14px;padding:18px;text-align:center;cursor:pointer}
+.choice input:checked+label{border-color:#171b21;background:#f1f3f5}
+.choice small{display:block;margin-top:6px;color:#69737d;font-weight:500}
+.summary{border:1px solid #e0e5e9;border-radius:12px;padding:11px 14px;margin-top:15px}
+.summary div{display:flex;justify-content:space-between;gap:15px;padding:8px 0}
+.summary div+div{border-top:1px solid #edf0f2}
+.buff{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;margin:10px 0}
+.buff label{margin:0}
+.buff input[type=checkbox]{width:19px;height:19px;padding:0;margin-right:7px;vertical-align:middle}
+.readonly{background:#f5f7f8;color:#606b75}
+.note{font-size:12px;color:#69737d;line-height:1.55}
+.buttons{display:flex;gap:10px;margin-top:18px}
+button{border:0;border-radius:12px;padding:13px 18px;font-size:15px;font-weight:850;cursor:pointer}
+.primary{background:#171b21;color:#fff;flex:1}.secondary{background:#e9edf0;color:#171b21}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:#f6f8f9;border-radius:11px;padding:13px}
+.kpi span{display:block;color:#69737d;font-size:12px;margin-bottom:4px}.kpi b{font-size:18px}
+.warning{color:#9b4b00;background:#fff6eb;border-radius:10px;padding:10px;font-size:12px;margin-top:12px;display:none}
+@media(max-width:600px){.grid,.choice{grid-template-columns:1fr}.buff{grid-template-columns:1fr 112px}.cover{min-height:570px}.cover h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="cover" class="card cover">
+  <div class="labubu" aria-label="귀여운 라부부 스타일 마스코트">
+    <div class="ear"></div><div class="ear right"></div><div class="hair"></div>
+    <div class="head"><div class="eye left"></div><div class="eye right"></div><div class="nose"></div><div class="mouth"></div><div class="tooth"></div></div>
+    <div class="body"></div>
+  </div>
+  <h1>🏆 라오킹 정점 이벤트</h1>
+  <p>목표 점수부터 필요한 병력,<br>버프 적용 후 필요한 가속까지 계산해보세요.</p>
+  <button class="primary" onclick="go(1)">사용하기</button>
+  <div class="ground"></div>
+</section>
+
+<div id="calculator" style="display:none">
+<div class="steps">
+  <div id="step1" class="active">1. 목표 점수</div>
+  <div id="step2">2. 병력 방식</div>
+  <div id="step3">3. 버프 & 가속</div>
+</div>
+
+<section id="page1" class="card page active">
+  <h2>1단계 · 목표 정점 점수</h2>
+  <p class="desc">큰 숫자를 직접 입력하지 않고 1만 점 단위로 설정합니다.</p>
+  <label for="scoreUnit">목표 점수 (1만 점 단위)</label>
+  <input id="scoreUnit" type="number" min="0" step="1" value="100">
+  <div class="scorebox"><small>실제 목표 정점 포인트</small><strong id="scorePreview">1,000,000점</strong></div>
+  <div class="note">입력값 × 10,000 = 목표 정점 포인트입니다. 전투력 1 증가 = 정점 포인트 1점으로 계산합니다.</div>
+  <div class="buttons"><button class="primary" onclick="go(2)">다음 단계 →</button></div>
+</section>
+
+<section id="page2" class="card page">
+  <h2>2단계 · 병력 확보 방법</h2>
+  <p class="desc">목표 점수를 어떤 방식으로 올릴지 선택하세요.</p>
+  <div class="choice">
+    <div><input type="radio" name="method" id="newT5" value="new" checked><label for="newT5">🆕 T5 새로 훈련<small>T5의 전투력만 계산</small></label></div>
+    <div><input type="radio" name="method" id="upgradeT5" value="upgrade"><label for="upgradeT5">⬆️ 낮은 티어 → T5<small>기존 티어의 전투력을 차감</small></label></div>
+  </div>
+
+  <div id="upgradeBox" style="display:none">
+    <label for="lowerTier">승급할 티어</label>
+    <select id="lowerTier">
+      <option value="1">T1 → T5</option><option value="2">T2 → T5</option>
+      <option value="3">T3 → T5</option><option value="4" selected>T4 → T5</option>
+    </select>
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+    <div><label for="t5Power">T5 1명 전투력</label><input id="t5Power" type="number" min="1" step="1" value="10"></div>
+    <div><label id="lowerLabel" for="lowerPower">T4 1명 전투력</label><input id="lowerPower" type="number" min="0" step="1" value="4"></div>
+  </div>
+  <div class="note" style="margin-top:8px">T5 신규 훈련에서는 오른쪽 기존 티어 전투력을 사용하지 않습니다.</div>
+
+  <div class="summary">
+    <div><span>목표 전투력 증가</span><b id="neededPower">1,000,000</b></div>
+    <div><span>병사 1명당 정점 포인트</span><b id="pointPerTroop">10점</b></div>
+    <div><span>필요 병력</span><b id="neededTroops">100,000명</b></div>
+  </div>
+  <div id="zeroWarning" class="warning">T5 전투력과 기존 티어 전투력이 같거나 부족해 승급으로 전투력을 올릴 수 없습니다.</div>
+
+  <div class="buttons"><button class="secondary" onclick="go(1)">← 이전</button><button class="primary" onclick="go(3)">다음 단계 →</button></div>
+</section>
+
+<section id="page3" class="card page">
+  <h2>3단계 · 버프 & 가속</h2>
+  <p class="desc">보유한 버프를 체크하고, 선택한 버프를 모두 합산하여 필요한 가속을 계산합니다.</p>
+
+  <div class="buff"><label><input type="checkbox" id="duke">공작 칭호 <span class="note">+10% 고정</span></label><input class="readonly" value="+10%" readonly></div>
+  <div class="buff"><label><input type="checkbox" id="civil">문명 버프 <span class="note">+5% 고정</span></label><input class="readonly" value="+5%" readonly></div>
+  <div class="buff"><label><input type="checkbox" id="holy">성지 버프</label><select id="holyValue"><option value="5">+5%</option><option value="10">+10%</option><option value="15">+15%</option></select></div>
+  <div class="buff"><label><input type="checkbox" id="rune">룬 버프</label><select id="runeValue"><option value="3">+3%</option><option value="5">+5%</option><option value="7">+7%</option><option value="10">+10%</option><option value="15">+15%</option></select></div>
+  <div class="buff"><label><input type="checkbox" id="kingdom">왕국 훈련 버프 <span class="note">+10% 고정</span></label><input class="readonly" value="+10%" readonly></div>
+  <div class="buff"><label><input type="checkbox" id="other">연구 등 기타 버프 <span class="note">+20% 고정</span></label><input class="readonly" value="+20%" readonly></div>
+  <div class="buff"><label><input type="checkbox" id="vipCheck">VIP 훈련 버프</label>
+    <select id="vip">
+      <option value="0">VIP 0 · 0%</option><option value="1">VIP 1 · 0%</option><option value="2">VIP 2 · 0%</option><option value="3">VIP 3 · 0%</option>
+      <option value="4">VIP 4 · 5%</option><option value="5">VIP 5 · 5%</option><option value="6">VIP 6 · 5%</option>
+      <option value="7">VIP 7 · 10%</option><option value="8">VIP 8 · 10%</option><option value="9">VIP 9 · 10%</option>
+      <option value="10">VIP 10 · 15%</option><option value="11">VIP 11 · 15%</option><option value="12">VIP 12 · 15%</option><option value="13">VIP 13 · 15%</option><option value="14">VIP 14 · 15%</option>
+      <option value="15">VIP 15 · 20%</option><option value="16">VIP 16 · 20%</option><option value="17">VIP 17 · 25%</option><option value="18">VIP 18 · 25%</option><option value="19">VIP 19 · 30%</option>
+    </select>
+  </div>
+
+  <div class="grid" style="margin-top:15px">
+    <div><label for="oneTime">0% 기준 1명 훈련시간 (초)</label><input id="oneTime" type="number" min="1" step="1" value="120"></div>
+    <div><label>총 훈련속도 버프</label><input id="totalBuff" class="readonly" value="0%" readonly></div>
+  </div>
+
+  <div class="resultbox"><small>필요한 총 가속</small><strong id="accelResult">0일</strong></div>
+  <div class="kpis">
+    <div class="kpi"><span>목표 정점 점수</span><b id="finalScore">1,000,000점</b></div>
+    <div class="kpi"><span>필요 병력</span><b id="finalTroops">100,000명</b></div>
+    <div class="kpi"><span>버프 적용 전</span><b id="beforeBuff">2일 18시간 40분</b></div>
+    <div class="kpi"><span>버프로 절약</span><b id="savedBuff">0초</b></div>
+  </div>
+  <div class="note" style="margin-top:12px">계산식: 총 기본 훈련시간 ÷ (1 + 총 훈련속도/100)</div>
+
+  <div class="buttons"><button class="secondary" onclick="go(2)">← 이전</button><button class="primary" onclick="calculate()">계산하기</button></div>
+</section>
+</div>
+</div>
+
+<script>
+const VIP_TRAIN={
+  0:0,1:0,2:0,3:0,4:5,5:5,6:5,7:10,8:10,9:10,
+  10:15,11:15,12:15,13:15,14:15,15:20,16:20,17:25,18:25,19:30
+};
+
+function $(id){return document.getElementById(id)}
+function num(id, fallback=0){const n=Number($(id).value);return Number.isFinite(n)?Math.max(0,n):fallback}
+function format(n){return Math.round(n).toLocaleString("ko-KR")}
+function duration(sec){
+  sec=Math.max(0,Math.round(sec));
+  const d=Math.floor(sec/86400);sec%=86400;
+  const h=Math.floor(sec/3600);sec%=3600;
+  const m=Math.floor(sec/60);const s=sec%60;
+  const a=[];if(d)a.push(d+"일");if(h)a.push(h+"시간");if(m)a.push(m+"분");
+  if(!a.length&&s)a.push(s+"초");
+  return a.length?a.join(" "):"0초";
+}
+function targetScore(){return num("scoreUnit")*10000}
+function method(){return document.querySelector('input[name="method"]:checked').value}
+
+function calculate(){
+  const target=targetScore();
+  const t5=Math.max(1,num("t5Power",10));
+  const low=Math.max(0,num("lowerPower",4));
+  const mode=method();
+  const per=mode==="new"?t5:Math.max(0,t5-low);
+  const troops=per>0?Math.ceil(target/per):0;
+
+  let buff=0;
+  if($("duke").checked)buff+=10;
+  if($("civil").checked)buff+=5;
+  if($("holy").checked)buff+=num("holyValue");
+  if($("rune").checked)buff+=num("runeValue");
+  if($("kingdom").checked)buff+=10;
+  if($("other").checked)buff+=20;
+  if($("vipCheck").checked)buff+=VIP_TRAIN[Number($("vip").value)]||0;
+
+  const base=troops*Math.max(1,num("oneTime",120));
+  const actual=base/(1+buff/100);
+
+  $("scorePreview").textContent=format(target)+"점";
+  $("neededPower").textContent=format(target);
+  $("pointPerTroop").textContent=format(per)+"점";
+  $("neededTroops").textContent=format(troops)+"명";
+  $("totalBuff").value=buff+"%";
+  $("accelResult").textContent=duration(actual);
+  $("finalScore").textContent=format(target)+"점";
+  $("finalTroops").textContent=format(troops)+"명";
+  $("beforeBuff").textContent=duration(base);
+  $("savedBuff").textContent=duration(base-actual);
+  $("zeroWarning").style.display=(mode==="upgrade"&&per<=0)?"block":"none";
+}
+
+function go(page){
+  $("cover").style.display="none";
+  $("calculator").style.display="block";
+  [1,2,3].forEach(i=>{
+    $("page"+i).classList.toggle("active",i===page);
+    $("step"+i).classList.toggle("active",i===page);
+  });
+  calculate();
+}
+
+function updateTier(){
+  const t=$("lowerTier").value;
+  const defaults={1:1,2:2,3:3,4:4};
+  $("lowerLabel").textContent="T"+t+" 1명 전투력";
+  $("lowerPower").value=defaults[t];
+  calculate();
+}
+
+document.querySelectorAll("input,select").forEach(el=>{
+  el.addEventListener("input",calculate);
+  el.addEventListener("change",calculate);
+});
+document.querySelectorAll('input[name="method"]').forEach(el=>{
+  el.addEventListener("change",()=>{
+    $("upgradeBox").style.display=method()==="upgrade"?"block":"none";
+    calculate();
+  });
+});
+$("lowerTier").addEventListener("change",updateTier);
+calculate();
+</script>
+</body>
+</html>
